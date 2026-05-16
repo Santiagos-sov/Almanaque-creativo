@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#1a1f0a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-touch-fullscreen" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Almanaque" />
   <link rel="manifest" href="manifest.json" />
@@ -567,9 +568,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 <!-- Service Worker registration for PWA offline -->
 <script>
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
-    });
+    navigator.serviceWorker.register('/Almanaque-creativo/sw.js', {scope: '/Almanaque-creativo/'}).catch(() => {});
+  }
+  if (window.location.pathname === '/Almanaque-creativo' && !window.location.pathname.endsWith('/')) {
+    window.location.replace('/Almanaque-creativo/');
   }
 </script>
 </body>
