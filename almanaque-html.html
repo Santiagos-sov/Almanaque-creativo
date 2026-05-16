@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a1f0a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Almanaque" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon.png" />
+  <title>Almanaque de Ideas</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body, #root { min-height: 100dvh; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background: #1a1f0a; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: #b3c75a44; border-radius: 99px; }
+
+    :root {
+      --o50: #f5fae8; --o100: #eaf2c2; --o200: #d4e08a; --o300: #b3c75a;
+      --o400: #8fa33a; --o500: #6b7f2a; --o600: #4e5e1f; --o700: #3d4a18;
+      --o800: #2d3612; --o900: #1a1f0a;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--o500), var(--o700));
+      color: #fff; border: none; border-radius: 99px;
+      padding: 11px 24px; font-size: 15px; font-weight: 600;
+      cursor: pointer; transition: opacity .15s, transform .1s; letter-spacing: .01em;
+    }
+    .btn-primary:active { opacity: .85; transform: scale(.97); }
+    .btn-ghost {
+      background: rgba(255,255,255,.08); color: #fff;
+      border: 1px solid rgba(255,255,255,.18); border-radius: 99px;
+      padding: 8px 18px; font-size: 13px; cursor: pointer; transition: background .15s;
+    }
+    .btn-ghost:active { background: rgba(255,255,255,.18); }
+
+    input, textarea, select {
+      width: 100%; background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.15); border-radius: 12px;
+      color: #fff; padding: 11px 14px; font-size: 15px;
+      font-family: inherit; outline: none; transition: border-color .15s;
+      -webkit-appearance: none;
+    }
+    input::placeholder, textarea::placeholder { color: rgba(255,255,255,.35); }
+    input:focus, textarea:focus, select:focus { border-color: var(--o400); }
+    select option { background: var(--o800); color: #fff; }
+    textarea { resize: vertical; }
+
+    .tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18);
+      border-radius: 99px; padding: 3px 10px; font-size: 11px;
+      color: var(--o100); font-weight: 500;
+    }
+    .card {
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+      border-radius: 20px; overflow: hidden; cursor: pointer;
+      transition: transform .2s, border-color .2s; flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .card:active { transform: scale(.97); }
+    .overlay-panel {
+      position: fixed; inset: 0; background: rgba(0,0,0,.65);
+      display: flex; align-items: flex-end; justify-content: center;
+      z-index: 200; padding: 0;
+    }
+    @media (min-width: 600px) {
+      .overlay-panel { align-items: center; padding: 1rem; }
+    }
+    .panel {
+      background: linear-gradient(160deg, var(--o800) 0%, var(--o900) 100%);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 24px 24px 0 0; padding: 1.5rem 1.25rem;
+      width: 100%; max-height: 92dvh; overflow-y: auto;
+    }
+    @media (min-width: 600px) {
+      .panel { border-radius: 24px; max-width: 500px; }
+    }
+    .label {
+      font-size: 11px; font-weight: 600; color: var(--o200);
+      margin-bottom: 6px; letter-spacing: .06em; text-transform: uppercase;
+      display: block;
+    }
+    .field { margin-bottom: 1rem; }
+
+    .stats-bar {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: clamp(6px, 2vw, 10px); margin-bottom: 1.25rem;
+    }
+    @media (max-width: 360px) { .stats-bar { grid-template-columns: repeat(2, 1fr); } }
+
+    .toolbar {
+      display: flex; gap: 8px; margin-bottom: 1.25rem; flex-wrap: wrap;
+    }
+    .toolbar input { min-width: 0; flex: 1 1 120px; }
+    .toolbar select { flex: 0 1 auto; min-width: 100px; max-width: 150px; }
+
+    .grid-feed {
+      display: grid; gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 40vw, 220px), 1fr));
+    }
+
+    .carousel-wrap { position: relative; }
+    .carousel-track {
+      position: relative; height: 310px;
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+    }
+    .carousel-card {
+      position: absolute; transition: transform .4s cubic-bezier(.25,.8,.25,1), opacity .4s;
+    }
+    .dots { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 12px; }
+    .dot { height: 6px; border-radius: 99px; cursor: pointer; transition: all .3s; background: rgba(255,255,255,.25); }
+
+    .fab {
+      position: fixed; bottom: calc(1.75rem + env(safe-area-inset-bottom));
+      left: 50%; transform: translateX(-50%); z-index: 100;
+    }
+    .app-wrap {
+      min-height: 100dvh;
+      background: linear-gradient(160deg, var(--o900) 0%, #111a06 40%, #080e03 100%);
+      padding: clamp(.75rem, 4vw, 2rem) clamp(.75rem, 4vw, 2rem) 5rem;
+      color: #fff; max-width: 100%; overflow-x: hidden;
+    }
+    .header-card {
+      position: relative; border-radius: 28px; overflow: hidden;
+      background: linear-gradient(160deg, var(--o600) 0%, var(--o900) 60%, #0d1206 100%);
+      padding: 1.5rem 1.25rem 1.25rem; margin-bottom: 1.5rem;
+      border: 1px solid rgba(255,255,255,.1);
+    }
+    .header-glow {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 70% 20%, rgba(180,215,80,.18) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .avatar {
+      width: 68px; height: 68px; border-radius: 50%; overflow: hidden;
+      border: 3px solid var(--o300); flex-shrink: 0;
+      background: linear-gradient(135deg, var(--o500), var(--o800));
+      display: flex; align-items: center; justify-content: center;
+    }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .edit-dot {
+      position: absolute; bottom: 0; right: 0;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--o400); display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 11px; border: 2px solid var(--o900);
+    }
+    .empty-state { text-align: center; padding: 3rem 0; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useRef, useEffect, useCallback } = React;
+const STORAGE_KEY = "almanaque-v3";
+
+/* ── Eye SVG Icon ── */
+const EyeIcon = ({ size = 34 }) => (
+  <svg viewBox="0 0 40 40" width={size} height={size} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="20" cy="20" rx="14" ry="9" stroke="#d4e08a" strokeWidth="1.6" strokeLinecap="round"/>
+    <circle cx="20" cy="20" r="4.5" stroke="#d4e08a" strokeWidth="1.6"/>
+    <circle cx="20" cy="20" r="1.5" fill="#d4e08a"/>
+    <line x1="6" y1="20" x2="3" y2="20" stroke="#d4e08a" strokeWidth="1.6" strokeLinecap="round"/>
+    <line x1="34" y1="20" x2="37" y2="20" stroke="#d4e08a" strokeWidth="1.6" strokeLinecap="round"/>
+  </svg>
+);
+
+/* ── Tag Badge ── */
+function TagBadge({ tag, onRemove }) {
+  return (
+    <span className="tag">
+      {tag}
+      {onRemove && <span onClick={() => onRemove(tag)} style={{cursor:"pointer",opacity:.6,fontSize:13}}>×</span>}
+    </span>
+  );
+}
+
+/* ── URL Preview ── */
+function URLPreview({ url }) {
+  const isYT = /youtu\.?be/.test(url);
+  const isIG = /instagram\.com/.test(url);
+  const isTW = /twitter\.com|x\.com/.test(url);
+  if (isYT) {
+    const id = url.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1];
+    if (id) return (
+      <div style={{borderRadius:12,overflow:"hidden",marginTop:8}}>
+        <iframe width="100%" height="180"
+          src={`https://www.youtube.com/embed/${id}`}
+          frameBorder="0" allowFullScreen style={{display:"block"}}/>
+      </div>
+    );
+  }
+  const icon = isIG ? "📸" : isTW ? "𝕏" : "🔗";
+  return (
+    <a href={url} target="_blank" rel="noreferrer" style={{
+      display:"flex",alignItems:"center",gap:10,marginTop:8,
+      background:"rgba(255,255,255,.07)",border:"1px solid rgba(255,255,255,.12)",
+      borderRadius:12,padding:"10px 14px",textDecoration:"none",color:"#eaf2c2",fontSize:13
+    }}>
+      <span style={{fontSize:18}}>{icon}</span>
+      <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",opacity:.7}}>{url}</span>
+      <span style={{opacity:.5,fontSize:12}}>↗</span>
+    </a>
+  );
+}
+
+/* ── Idea Card ── */
+function IdeaCard({ idea, onClick, extraStyle }) {
+  return (
+    <div className="card" style={{width:220,...extraStyle}} onClick={() => onClick(idea)}>
+      {idea.image && (
+        <div style={{width:"100%",aspectRatio:"4/3",overflow:"hidden"}}>
+          <img src={idea.image} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+        </div>
+      )}
+      {!idea.image && idea.url && (
+        <div style={{height:90,background:"linear-gradient(135deg,#3d4a18,#1a1f0a)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32}}>
+          {/youtu/.test(idea.url) ? "▶" : /instagram/.test(idea.url) ? "📸" : "🔗"}
+        </div>
+      )}
+      <div style={{padding:"12px 14px"}}>
+        <p style={{fontWeight:600,fontSize:14,color:"#fff",marginBottom:4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{idea.title}</p>
+        {idea.text && (
+          <p style={{fontSize:12,color:"#d4e08a",lineHeight:1.5,marginBottom:8,
+            display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>
+            {idea.text}
+          </p>
+        )}
+        <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:6}}>
+          {idea.tags.slice(0,2).map(t => <TagBadge key={t} tag={t}/>)}
+        </div>
+        <p style={{fontSize:10,color:"#6b7f2a"}}>{idea.date}</p>
+      </div>
+    </div>
+  );
+}
+
+/* ── Carousel ── */
+function Carousel({ ideas, onSelect }) {
+  const [active, setActive] = useState(0);
+  const total = ideas.length;
+  if (!total) return null;
+  const prev = () => setActive(a => (a - 1 + total) % total);
+  const next = () => setActive(a => (a + 1) % total);
+
+  const getStyle = (i) => {
+    const diff = ((i - active + total) % total);
+    if (diff === 0)         return {transform:"translateX(0) scale(1.08)",zIndex:10,opacity:1};
+    if (diff === 1)         return {transform:"translateX(195px) scale(0.88)",zIndex:5,opacity:.75};
+    if (diff === total - 1) return {transform:"translateX(-195px) scale(0.88)",zIndex:5,opacity:.75};
+    if (diff === 2)         return {transform:"translateX(350px) scale(0.74)",zIndex:2,opacity:.38};
+    if (diff === total - 2) return {transform:"translateX(-350px) scale(0.74)",zIndex:2,opacity:.38};
+    return {transform:"scale(0.6)",zIndex:0,opacity:0};
+  };
+
+  return (
+    <div className="carousel-wrap">
+      <div className="carousel-track">
+        {ideas.map((idea, i) => (
+          <div key={idea.id} className="carousel-card" style={getStyle(i)}>
+            <IdeaCard idea={idea} onClick={onSelect}/>
+          </div>
+        ))}
+      </div>
+      <div className="dots">
+        <button onClick={prev} className="btn-ghost" style={{padding:"6px 16px",fontSize:20}}>‹</button>
+        <div style={{display:"flex",gap:6}}>
+          {ideas.map((_,i) => (
+            <div key={i} className="dot" onClick={() => setActive(i)}
+              style={{width:i===active?20:6,background:i===active?"#b3c75a":"rgba(255,255,255,.25)"}}/>
+          ))}
+        </div>
+        <button onClick={next} className="btn-ghost" style={{padding:"6px 16px",fontSize:20}}>›</button>
+      </div>
+    </div>
+  );
+}
+
+/* ── User Header ── */
+function UserHeader({ profile, onEdit }) {
+  return (
+    <div className="header-card">
+      <div className="header-glow"/>
+      <div style={{display:"flex",alignItems:"center",gap:"1rem",position:"relative"}}>
+        <div style={{position:"relative",flexShrink:0}}>
+          <div className="avatar">
+            {profile.photo ? <img src={profile.photo} alt=""/> : <EyeIcon/>}
+          </div>
+          <div className="edit-dot" onClick={onEdit}>✏️</div>
+        </div>
+        <div style={{flex:1,minWidth:0}}>
+          <h1 style={{color:"#fff",fontWeight:600,fontSize:"clamp(17px,4.5vw,22px)",marginBottom:2,
+            whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+            {profile.name || "Tu nombre"}
+          </h1>
+          {profile.bio && <p style={{color:"#b3c75a",fontSize:"clamp(11px,2.5vw,13px)",marginTop:4,lineHeight:1.5}}>{profile.bio}</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Profile Panel ── */
+function ProfilePanel({ profile, onSave, onClose }) {
+  const [form, setForm] = useState({...profile});
+  const fileRef = useRef();
+  const handlePhoto = e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => setForm(p => ({...p, photo: ev.target.result}));
+    r.readAsDataURL(f);
+  };
+  return (
+    <div className="overlay-panel" onClick={onClose}>
+      <div className="panel" onClick={e => e.stopPropagation()}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1.25rem"}}>
+          <h2 style={{color:"#fff",fontWeight:600,fontSize:18}}>Editar perfil</h2>
+          <button onClick={onClose} className="btn-ghost" style={{padding:"4px 12px"}}>×</button>
+        </div>
+        <div style={{textAlign:"center",marginBottom:"1.25rem"}}>
+          <div onClick={() => fileRef.current.click()} style={{
+            width:80,height:80,borderRadius:"50%",overflow:"hidden",margin:"0 auto 10px",
+            border:"3px solid #8fa33a",background:"linear-gradient(135deg,#6b7f2a,#2d3612)",
+            display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"
+          }}>
+            {form.photo ? <img src={form.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/> : <EyeIcon size={32}/>}
+          </div>
+          <button onClick={() => fileRef.current.click()} className="btn-ghost" style={{fontSize:12}}>Cambiar foto</button>
+          <input ref={fileRef} type="file" accept="image/*" onChange={handlePhoto} style={{display:"none"}}/>
+        </div>
+        <div className="field">
+          <label className="label">Nombre</label>
+          <input value={form.name} onChange={e => setForm(p => ({...p, name: e.target.value}))} placeholder="Tu nombre"/>
+        </div>
+        <div className="field">
+          <label className="label">Bio</label>
+          <textarea value={form.bio} onChange={e => setForm(p => ({...p, bio: e.target.value}))} placeholder="Cuéntanos sobre ti…" rows={3}/>
+        </div>
+        <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+          <button onClick={onClose} className="btn-ghost">Cancelar</button>
+          <button onClick={() => { onSave(form); onClose(); }} className="btn-primary">Guardar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Add Idea Panel ── */
+function AddIdeaPanel({ onSave, onClose }) {
+  const [form, setForm] = useState({title:"",text:"",tags:[],image:null,url:""});
+  const [tagInput, setTagInput] = useState("");
+  const fileRef = useRef();
+
+  const addTag = () => {
+    const t = tagInput.trim().toLowerCase();
+    if (t && !form.tags.includes(t)) setForm(p => ({...p, tags:[...p.tags, t]}));
+    setTagInput("");
+  };
+  const handleFile = e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => setForm(p => ({...p, image: ev.target.result}));
+    r.readAsDataURL(f);
+  };
+  const submit = () => {
+    if (!form.title.trim()) return;
+    onSave({ id: Date.now(), ...form,
+      date: new Date().toLocaleDateString("es-MX", {year:"numeric",month:"short",day:"numeric"}) });
+    onClose();
+  };
+
+  return (
+    <div className="overlay-panel" onClick={onClose}>
+      <div className="panel" onClick={e => e.stopPropagation()}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1.25rem"}}>
+          <h2 style={{color:"#fff",fontWeight:600,fontSize:18}}>✦ Nueva idea</h2>
+          <button onClick={onClose} className="btn-ghost" style={{padding:"4px 12px"}}>×</button>
+        </div>
+        <div className="field">
+          <label className="label">Título *</label>
+          <input value={form.title} onChange={e => setForm(p => ({...p, title: e.target.value}))} placeholder="¿Cuál es tu idea?"/>
+        </div>
+        <div className="field">
+          <label className="label">Descripción</label>
+          <textarea value={form.text} onChange={e => setForm(p => ({...p, text: e.target.value}))} placeholder="Desarrolla tu idea…" rows={3}/>
+        </div>
+        <div className="field">
+          <label className="label">URL de video o post</label>
+          <input value={form.url} onChange={e => setForm(p => ({...p, url: e.target.value}))} placeholder="https://youtube.com/…"/>
+          {form.url && <URLPreview url={form.url}/>}
+        </div>
+        <div className="field">
+          <label className="label">Imagen</label>
+          {form.image ? (
+            <div style={{position:"relative",display:"inline-block"}}>
+              <img src={form.image} alt="" style={{height:80,borderRadius:10,objectFit:"cover"}}/>
+              <span onClick={() => setForm(p => ({...p, image:null}))} style={{
+                position:"absolute",top:4,right:4,background:"rgba(0,0,0,.6)",
+                borderRadius:"50%",width:20,height:20,display:"flex",alignItems:"center",
+                justifyContent:"center",cursor:"pointer",color:"#fff",fontSize:12
+              }}>×</span>
+            </div>
+          ) : (
+            <button onClick={() => fileRef.current.click()} className="btn-ghost" style={{width:"100%",padding:12}}>
+              + Subir imagen
+            </button>
+          )}
+          <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{display:"none"}}/>
+        </div>
+        <div className="field">
+          <label className="label">Etiquetas</label>
+          <div style={{display:"flex",gap:6}}>
+            <input value={tagInput} onChange={e => setTagInput(e.target.value)}
+              onKeyDown={e => e.key==="Enter" && (e.preventDefault(), addTag())}
+              placeholder="diseño, concepto… (Enter)" style={{flex:1}}/>
+            <button onClick={addTag} className="btn-ghost" style={{flexShrink:0,padding:"8px 14px"}}>+</button>
+          </div>
+          {form.tags.length > 0 && (
+            <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:8}}>
+              {form.tags.map(t => <TagBadge key={t} tag={t} onRemove={t => setForm(p => ({...p, tags:p.tags.filter(x => x!==t)}))}/>)}
+            </div>
+          )}
+        </div>
+        <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:".5rem"}}>
+          <button onClick={onClose} className="btn-ghost">Cancelar</button>
+          <button onClick={submit} className="btn-primary" style={{opacity:form.title.trim()?1:.4}}>
+            Guardar idea ✦
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Detail Panel ── */
+function DetailPanel({ idea, onClose, onDelete }) {
+  useEffect(() => {
+    const h = e => { if (e.key==="Escape") onClose(); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, []);
+  return (
+    <div className="overlay-panel" onClick={onClose}>
+      <div className="panel" style={{maxWidth:540}} onClick={e => e.stopPropagation()}>
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:"1rem"}}>
+          <h2 style={{color:"#fff",fontWeight:600,fontSize:19}}>{idea.title}</h2>
+          <button onClick={onClose} className="btn-ghost" style={{padding:"4px 12px"}}>×</button>
+        </div>
+        {idea.image && <img src={idea.image} alt="" style={{width:"100%",borderRadius:14,marginBottom:12,maxHeight:220,objectFit:"cover"}}/>}
+        {idea.text && <p style={{color:"#eaf2c2",lineHeight:1.7,fontSize:14,marginBottom:12}}>{idea.text}</p>}
+        {idea.url && <URLPreview url={idea.url}/>}
+        <div style={{display:"flex",flexWrap:"wrap",gap:4,margin:"12px 0 8px"}}>
+          {idea.tags.map(t => <TagBadge key={t} tag={t}/>)}
+        </div>
+        <p style={{fontSize:11,color:"#4e5e1f",marginBottom:"1rem"}}>{idea.date}</p>
+        <button onClick={() => { onDelete(idea.id); onClose(); }} style={{
+          background:"rgba(200,60,60,.15)",border:"1px solid rgba(200,60,60,.3)",
+          color:"#f87171",borderRadius:99,padding:"7px 18px",fontSize:13,cursor:"pointer"
+        }}>Eliminar</button>
+      </div>
+    </div>
+  );
+}
+
+/* ── App ── */
+function App() {
+  const [ideas, setIdeas] = useState([]);
+  const [profile, setProfile] = useState({name:"",bio:"",photo:null});
+  const [loaded, setLoaded] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterTag, setFilterTag] = useState("");
+  const [view, setView] = useState("carousel");
+  const [selected, setSelected] = useState(null);
+  const [adding, setAdding] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) { const d = JSON.parse(saved); if (d.ideas) setIdeas(d.ideas); if (d.profile) setProfile(d.profile); }
+    } catch {}
+    setLoaded(true);
+  }, []);
+
+  const persist = (nextIdeas, nextProfile) => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ideas: nextIdeas, profile: nextProfile})); } catch {}
+  };
+  const saveIdea = idea => { const n = [idea, ...ideas]; setIdeas(n); persist(n, profile); };
+  const deleteIdea = id => { const n = ideas.filter(i => i.id !== id); setIdeas(n); persist(n, profile); };
+  const saveProfile = p => { setProfile(p); persist(ideas, p); };
+
+  const allTags = [...new Set(ideas.flatMap(i => i.tags))];
+  const filtered = ideas.filter(i => {
+    const q = search.toLowerCase();
+    return (!q || i.title.toLowerCase().includes(q) || (i.text||"").toLowerCase().includes(q) || i.tags.some(t => t.includes(q)))
+      && (!filterTag || i.tags.includes(filterTag));
+  });
+
+  if (!loaded) return <div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100dvh",color:"#6b7f2a",fontSize:15}}>Cargando…</div>;
+
+  return (
+    <div className="app-wrap">
+      <UserHeader profile={profile} onEdit={() => setEditingProfile(true)}/>
+
+      <div className="stats-bar">
+        {[["Ideas",ideas.length],["Etiquetas",allTags.length],["Imágenes",ideas.filter(i=>i.image).length],["URLs",ideas.filter(i=>i.url).length]].map(([l,v]) => (
+          <div key={l} style={{background:"rgba(255,255,255,.05)",border:"1px solid rgba(255,255,255,.08)",borderRadius:14,padding:"10px 6px",textAlign:"center"}}>
+            <p style={{fontSize:"clamp(16px,4vw,20px)",fontWeight:600,color:"#d4e08a",margin:0}}>{v}</p>
+            <p style={{fontSize:"clamp(9px,2vw,11px)",color:"#4e5e1f",margin:0,marginTop:2}}>{l}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="toolbar">
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar…"/>
+        {allTags.length > 0 && (
+          <select value={filterTag} onChange={e => setFilterTag(e.target.value)}>
+            <option value="">Todas</option>
+            {allTags.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        )}
+        <button onClick={() => setView(v => v==="carousel"?"grid":"carousel")} className="btn-ghost" style={{flexShrink:0,fontSize:17,padding:"8px 12px"}}>
+          {view==="carousel" ? "⊞" : "◎"}
+        </button>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="empty-state">
+          <p style={{fontSize:40,marginBottom:10}}>◎</p>
+          <p style={{color:"#6b7f2a",fontSize:15}}>{ideas.length===0 ? "Tu almanaque está vacío." : "Sin resultados."}</p>
+          {ideas.length===0 && <p style={{color:"#3d4a18",fontSize:13,marginTop:6}}>Captura tu primera idea ↓</p>}
+        </div>
+      ) : view==="carousel" ? (
+        <Carousel ideas={filtered} onSelect={setSelected}/>
+      ) : (
+        <div className="grid-feed">
+          {filtered.map(i => <IdeaCard key={i.id} idea={i} onClick={setSelected}/>)}
+        </div>
+      )}
+
+      <div className="fab">
+        <button onClick={() => setAdding(true)} className="btn-primary"
+          style={{boxShadow:"0 0 24px #6b7f2a66",padding:"12px 28px",fontSize:15,
+            background:"linear-gradient(135deg,#8fa33a,#3d4a18)"}}>
+          ✦ Nueva idea
+        </button>
+      </div>
+
+      {adding && <AddIdeaPanel onSave={saveIdea} onClose={() => setAdding(false)}/>}
+      {editingProfile && <ProfilePanel profile={profile} onSave={saveProfile} onClose={() => setEditingProfile(false)}/>}
+      {selected && <DetailPanel idea={selected} onClose={() => setSelected(null)} onDelete={deleteIdea}/>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+
+<!-- Service Worker registration for PWA offline -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
